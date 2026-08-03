@@ -1,0 +1,21 @@
+{
+  "name": "vds-manager-bot",
+  "version": "1.0.0",
+  "description": "Telegram-бот для управления VDS сервером",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node --watch src/bot.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "dotenv": "^16.4.7",
+    "systeminformation": "^5.23.5",
+    "dockerode": "^4.0.4",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
