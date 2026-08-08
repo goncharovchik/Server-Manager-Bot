@@ -39,7 +39,7 @@ function register(bot) {
     );
   });
 
-  bot.command('backup_list', async (ctx) => {
+  const handleBackupList = async (ctx) => {
     const { stdout, exitCode } = await exec(
       `ls -lhS ${JSON.stringify(config.backupDir)} 2>/dev/null | tail -n +2`
     );
@@ -49,7 +49,10 @@ function register(bot) {
     }
 
     return ctx.reply(`<b>💾 Бэкапы</b>\n\n${codeBlock(truncate(stdout))}`, { parse_mode: 'HTML' });
-  });
+  };
+
+  bot.command('backup_list', handleBackupList);
+  bot.hears('📋 Список бэкапов', handleBackupList);
 
   // Inline-кнопка
   bot.action('bk:list', async (ctx) => {

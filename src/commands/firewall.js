@@ -112,11 +112,14 @@ function register(bot) {
     return ctx.reply(`✅ iptables: Правило добавлено (DROP ${parsed.port}/${parsed.proto}).\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
   });
 
-  // --- Явные команды iptables ---
-  bot.command(['iptables', 'iptables_status'], async (ctx) => {
+  const handleIptables = async (ctx) => {
     const { stdout, stderr } = await exec('iptables -L -n -v --line-numbers');
     return ctx.reply(`<b>🧱 iptables Rules</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
-  });
+  };
+
+  // --- Явные команды iptables ---
+  bot.command(['iptables', 'iptables_status'], handleIptables);
+  bot.hears('🧱 Правила iptables', handleIptables);
 
   bot.action('fw:iptables', async (ctx) => {
     ctx.answerCbQuery();

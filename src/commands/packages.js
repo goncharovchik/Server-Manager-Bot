@@ -2,7 +2,7 @@ const { exec } = require('../utils/exec');
 const { codeBlock, truncate } = require('../utils/format');
 
 function register(bot) {
-  bot.command('apt_update', async (ctx) => {
+  const handleUpdate = async (ctx) => {
     const msg = await ctx.reply('⏳ Обновляю список пакетов...');
     const { stdout, stderr, exitCode } = await exec('apt-get update -y', { timeout: 120_000 });
 
@@ -11,9 +11,22 @@ function register(bot) {
       : `❌ <b>Ошибка обновления</b>\n\n${codeBlock(truncate(stderr || stdout))}`;
 
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, output, { parse_mode: 'HTML' });
-  });
+  };
 
-  // Inline-кнопка
+  const handleUpgrade = async (ctx) => {
+    const msg = await ctx.reply('⏳ Обновляю пакеты (может занять несколько минут)...');
+    const { stdout, stderr, exitCode } = await exec('apt-get upgrade -y', { timeout: 600_000 });
+
+    const output = exitCode === 0
+      ? `✅ <b>Пакеты обновлены</b>\n\n${codeBlock(truncate(stdout))}`
+      : `❌ <b>Ошибка</b>\n\n${codeBlock(truncate(stderr || stdout))}`;
+
+    return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, output, { parse_mode: 'HTML' });
+  };
+
+  bot.command('apt_update', handleUpdate);
+  bot.hears('🔄 Update APT', handleUpdate);
+
   bot.action('apt:update', async (ctx) => {
     ctx.answerCbQuery('Обновляю...');
     await ctx.editMessageText('⏳ Обновляю список пакетов...');
@@ -26,16 +39,8 @@ function register(bot) {
     return ctx.editMessageText(output, { parse_mode: 'HTML' });
   });
 
-  bot.command('apt_upgrade', async (ctx) => {
-    const msg = await ctx.reply('⏳ Обновляю пакеты (может занять несколько минут)...');
-    const { stdout, stderr, exitCode } = await exec('apt-get upgrade -y', { timeout: 600_000 });
-
-    const output = exitCode === 0
-      ? `✅ <b>Пакеты обновлены</b>\n\n${codeBlock(truncate(stdout))}`
-      : `❌ <b>Ошибка</b>\n\n${codeBlock(truncate(stderr || stdout))}`;
-
-    return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, output, { parse_mode: 'HTML' });
-  });
+  bot.command('apt_upgrade', handleUpgrade);
+  bot.hears('⬆️ Upgrade APT', handleUpgrade);
 
   bot.action('apt:upgrade', async (ctx) => {
     ctx.answerCbQuery('Обновляю пакеты...');

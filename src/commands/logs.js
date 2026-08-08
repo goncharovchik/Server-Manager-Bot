@@ -12,26 +12,29 @@ function register(bot) {
     return sendLongCodeBlock(ctx, `<b>📋 Логи: ${escapeHtml(service)}</b>`, output);
   });
 
-  bot.command('syslog', async (ctx) => {
+  const handleSyslog = async (ctx) => {
     const { stdout, stderr } = await exec('tail -n 100 /var/log/syslog');
     const output = stdout || stderr;
-
     return sendLongCodeBlock(ctx, `<b>📋 Syslog</b>`, output);
-  });
+  };
 
-  // Inline-кнопка
+  const handleAuthlog = async (ctx) => {
+    const { stdout, stderr } = await exec('tail -n 100 /var/log/auth.log');
+    const output = stdout || stderr;
+    return sendLongCodeBlock(ctx, `<b>🔐 Auth Log</b>`, output);
+  };
+
+  bot.command('syslog', handleSyslog);
+  bot.hears('📋 Syslog', handleSyslog);
+
   bot.action('log:syslog', async (ctx) => {
     ctx.answerCbQuery();
     const { stdout, stderr } = await exec('tail -n 100 /var/log/syslog');
     return sendLongCodeBlock(ctx, `<b>📋 Syslog</b>`, stdout || stderr);
   });
 
-  bot.command('authlog', async (ctx) => {
-    const { stdout, stderr } = await exec('tail -n 100 /var/log/auth.log');
-    const output = stdout || stderr;
-
-    return sendLongCodeBlock(ctx, `<b>🔐 Auth Log</b>`, output);
-  });
+  bot.command('authlog', handleAuthlog);
+  bot.hears('🔐 Auth log', handleAuthlog);
 
   bot.action('log:authlog', async (ctx) => {
     ctx.answerCbQuery();

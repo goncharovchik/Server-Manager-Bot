@@ -199,30 +199,6 @@ function register(bot) {
     });
   });
 
-  // Кнопки подменю Мониторинга
-  bot.hears('📊 Сводка', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/status' } }));
-  bot.hears('🧠 CPU', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/cpu' } }));
-  bot.hears('💾 RAM', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/ram' } }));
-  bot.hears('💿 Диск', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/disk' } }));
-  bot.hears('🌐 Сеть', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/network' } }));
-  bot.hears('⏱ Uptime', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/uptime' } }));
-
-  // Кнопки подменю Сервисов и Docker
-  bot.hears('📋 Список сервисов', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/services' } }));
-  bot.hears('📋 Контейнеры', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/containers' } }));
-
-  // Кнопки подменю Firewall
-  bot.hears('📋 Статус Firewall', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/fw_status' } }));
-  bot.hears('📜 Правила UFW', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/fw_rules' } }));
-  bot.hears('🧱 Правила iptables', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/iptables' } }));
-
-  // Кнопки пакетов, бэкапов и логов
-  bot.hears('🔄 Update APT', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/apt_update' } }));
-  bot.hears('⬆️ Upgrade APT', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/apt_upgrade' } }));
-  bot.hears('📋 Список бэкапов', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/backup_list' } }));
-  bot.hears('📋 Syslog', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/syslog' } }));
-  bot.hears('🔐 Auth log', (ctx) => bot.handleUpdate({ ...ctx.update, message: { ...ctx.message, text: '/authlog' } }));
-
   bot.hears('❓ Помощь', (ctx) => {
     return ctx.reply(HELP_TEXT, {
       parse_mode: 'HTML',
