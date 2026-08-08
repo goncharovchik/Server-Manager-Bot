@@ -1,0 +1,23 @@
+services:
+  vds-manager-bot:
+    build: .
+    container_name: vds-manager-bot
+    restart: unless-stopped
+    privileged: true
+    pid: host
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      # Docker socket — управление контейнерами хоста
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # D-Bus и systemd — управление сервисами хоста
+      - /run/dbus:/run/dbus:ro
+      - /run/systemd:/run/systemd:ro
+      # Логи бота (персистентные)
+      - ./logs:/app/logs
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
