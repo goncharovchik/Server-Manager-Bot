@@ -1,10 +1,24 @@
 const { exec } = require('../utils/exec');
-const { codeBlock, truncate, splitMessage } = require('../utils/format');
+const { codeBlock, sendLongCodeBlock } = require('../utils/format');
 
 function register(bot) {
   bot.command('shell', async (ctx) => {
-    const command = ctx.message.text.replace(/^\/shell\s*/, '');
+    let command = ctx.message.text.replace(/^\/shell\s*/, '').trim();
     if (!command) return ctx.reply('❌ Укажите команду: /shell <command>');
+
+    // Автоматическое преобразование интерактивных команд в пакетный режим
+    const trimmedCmd = command.toLowerCase();
+
+    if (/^(htop|top)$/.test(trimmedCmd)) {
+      command = 'top -b -n 1';
+    } else if (/^(nano|vim|vi|emacs|less|more|mc)\b/.test(trimmedCmd)) {
+      return ctx.reply(
+        '⚠️ Интерактивные консольные утилиты (nano, vim, less, mc) не поддерживаются в Telegram Shell.\n\n' +
+        '• Для просмотра файлов используйте <code>/cat &lt;path&gt;</code>\n' +
+        '• Для работы с файлами: <code>/download &lt;path&gt;</code> и <code>/upload</code>',
+        { parse_mode: 'HTML' }
+      );
+    }
 
     const msg = await ctx.reply('⏳ Выполняю...');
     const { stdout, stderr, exitCode } = await exec(command);
@@ -18,11 +32,7 @@ function register(bot) {
       ? `✅ <b>Exit code: ${exitCode}</b>`
       : `❌ <b>Exit code: ${exitCode}</b>`;
 
-    const fullText = `${header}\n\n${codeBlock(truncate(output))}`;
-
-    return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, fullText, {
-      parse_mode: 'HTML',
-    });
+    return sendLongCodeBlock(ctx, header, output, { editMessageId: msg.message_id });
   });
 }
 

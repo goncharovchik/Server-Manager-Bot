@@ -1,64 +1,161 @@
 const { exec } = require('../utils/exec');
 const { escapeHtml, codeBlock, truncate } = require('../utils/format');
 
-function register(bot) {
-  bot.command('fw_status', async (ctx) => {
+async function checkUfw() {
+  const { exitCode, stdout } = await exec('ufw status');
+  return exitCode === 0 && !stdout.includes('command not found');
+}
+
+async function getStatusOutput() {
+  const hasUfw = await checkUfw();
+  if (hasUfw) {
     const { stdout, stderr } = await exec('ufw status');
-    const output = stdout || stderr;
-    return ctx.reply(`<b>🔥 Firewall Status</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
+    return { type: 'UFW', output: stdout || stderr };
+  }
+  const { stdout, stderr } = await exec('iptables -L -n -v');
+  return { type: 'iptables', output: stdout || stderr };
+}
+
+async function getRulesOutput() {
+  const hasUfw = await checkUfw();
+  if (hasUfw) {
+    const { stdout, stderr } = await exec('ufw status numbered');
+    return { type: 'UFW', output: stdout || stderr };
+  }
+  const { stdout, stderr } = await exec('iptables -L INPUT --line-numbers -n -v');
+  return { type: 'iptables (INPUT)', output: stdout || stderr };
+}
+
+function parsePortProto(input) {
+  if (!input) return null;
+  const match = input.trim().match(/^(\d+)(?:\/(tcp|udp))?$/i);
+  if (!match) return null;
+  return {
+    port: match[1],
+    proto: (match[2] || 'tcp').toLowerCase(),
+  };
+}
+
+function register(bot) {
+  // --- Общие команды Firewall (UFW + iptables fallback) ---
+  bot.command('fw_status', async (ctx) => {
+    const { type, output } = await getStatusOutput();
+    return ctx.reply(`<b>🔥 Firewall Status (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
 
-  // Inline-кнопка
   bot.action('fw:status', async (ctx) => {
     ctx.answerCbQuery();
-    const { stdout, stderr } = await exec('ufw status');
-    return ctx.editMessageText(`<b>🔥 Firewall Status</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
+    const { type, output } = await getStatusOutput();
+    return ctx.editMessageText(`<b>🔥 Firewall Status (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
 
   bot.command('fw_rules', async (ctx) => {
-    const { stdout, stderr } = await exec('ufw status numbered');
-    const output = stdout || stderr;
-    return ctx.reply(`<b>🔥 Firewall Rules</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
+    const { type, output } = await getRulesOutput();
+    return ctx.reply(`<b>🔥 Firewall Rules (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
 
   bot.action('fw:rules', async (ctx) => {
     ctx.answerCbQuery();
-    const { stdout, stderr } = await exec('ufw status numbered');
-    return ctx.editMessageText(`<b>🔥 Firewall Rules</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
+    const { type, output } = await getRulesOutput();
+    return ctx.editMessageText(`<b>🔥 Firewall Rules (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
 
   bot.command('fw_allow', async (ctx) => {
-    const port = ctx.message.text.split(/\s+/)[1];
-    if (!port) return ctx.reply('❌ Укажите порт: /fw_allow <port>');
+    const portArg = ctx.message.text.split(/\s+/)[1];
+    const parsed = parsePortProto(portArg);
+    if (!parsed) return ctx.reply('❌ Укажите порт: /fw_allow <port> (Пример: 80, 443/tcp, 53/udp)');
 
-    if (!/^\d+(\/(?:tcp|udp))?$/.test(port)) {
-      return ctx.reply('❌ Некорректный формат. Примеры: 80, 443/tcp, 53/udp');
+    const hasUfw = await checkUfw();
+    if (hasUfw) {
+      const { stdout, stderr, exitCode } = await exec(`ufw allow ${portArg}`);
+      if (exitCode !== 0) {
+        return ctx.reply(`❌ Ошибка UFW:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+      }
+      return ctx.reply(`✅ UFW: Порт <code>${escapeHtml(portArg)}</code> открыт.\n${codeBlock(stdout)}`, { parse_mode: 'HTML' });
     }
 
-    const { stdout, stderr, exitCode } = await exec(`ufw allow ${port}`);
-
+    // Fallback на iptables
+    const cmd = `iptables -I INPUT -p ${parsed.proto} --dport ${parsed.port} -j ACCEPT`;
+    const { stdout, stderr, exitCode } = await exec(cmd);
     if (exitCode !== 0) {
-      return ctx.reply(`❌ Ошибка:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+      return ctx.reply(`❌ Ошибка iptables:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
     }
-
-    return ctx.reply(`✅ Порт <code>${escapeHtml(port)}</code> открыт.\n${codeBlock(stdout)}`, { parse_mode: 'HTML' });
+    return ctx.reply(`✅ iptables: Правило добавлено (ACCEPT ${parsed.port}/${parsed.proto}).\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
   });
 
   bot.command('fw_deny', async (ctx) => {
-    const port = ctx.message.text.split(/\s+/)[1];
-    if (!port) return ctx.reply('❌ Укажите порт: /fw_deny <port>');
+    const portArg = ctx.message.text.split(/\s+/)[1];
+    const parsed = parsePortProto(portArg);
+    if (!parsed) return ctx.reply('❌ Укажите порт: /fw_deny <port> (Пример: 80, 443/tcp, 53/udp)');
 
-    if (!/^\d+(\/(?:tcp|udp))?$/.test(port)) {
-      return ctx.reply('❌ Некорректный формат. Примеры: 80, 443/tcp, 53/udp');
+    const hasUfw = await checkUfw();
+    if (hasUfw) {
+      const { stdout, stderr, exitCode } = await exec(`ufw deny ${portArg}`);
+      if (exitCode !== 0) {
+        return ctx.reply(`❌ Ошибка UFW:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+      }
+      return ctx.reply(`✅ UFW: Порт <code>${escapeHtml(portArg)}</code> закрыт.\n${codeBlock(stdout)}`, { parse_mode: 'HTML' });
     }
 
-    const { stdout, stderr, exitCode } = await exec(`ufw deny ${port}`);
-
+    // Fallback на iptables
+    const cmd = `iptables -I INPUT -p ${parsed.proto} --dport ${parsed.port} -j DROP`;
+    const { stdout, stderr, exitCode } = await exec(cmd);
     if (exitCode !== 0) {
-      return ctx.reply(`❌ Ошибка:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+      return ctx.reply(`❌ Ошибка iptables:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+    }
+    return ctx.reply(`✅ iptables: Правило добавлено (DROP ${parsed.port}/${parsed.proto}).\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
+  });
+
+  // --- Явные команды iptables ---
+  bot.command(['iptables', 'iptables_status'], async (ctx) => {
+    const { stdout, stderr } = await exec('iptables -L -n -v --line-numbers');
+    return ctx.reply(`<b>🧱 iptables Rules</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
+  });
+
+  bot.action('fw:iptables', async (ctx) => {
+    ctx.answerCbQuery();
+    const { stdout, stderr } = await exec('iptables -L -n -v --line-numbers');
+    return ctx.editMessageText(`<b>🧱 iptables Rules</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
+  });
+
+  bot.command('iptables_allow', async (ctx) => {
+    const portArg = ctx.message.text.split(/\s+/)[1];
+    const parsed = parsePortProto(portArg);
+    if (!parsed) return ctx.reply('❌ Использование: /iptables_allow <port[/tcp|udp]>\nПример: /iptables_allow 8080/tcp');
+
+    const cmd = `iptables -I INPUT -p ${parsed.proto} --dport ${parsed.port} -j ACCEPT`;
+    const { stdout, stderr, exitCode } = await exec(cmd);
+    if (exitCode !== 0) {
+      return ctx.reply(`❌ Ошибка iptables:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+    }
+    return ctx.reply(`✅ iptables: Разрешен трафик на порт <code>${escapeHtml(parsed.port)}/${parsed.proto}</code>\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
+  });
+
+  bot.command('iptables_deny', async (ctx) => {
+    const portArg = ctx.message.text.split(/\s+/)[1];
+    const parsed = parsePortProto(portArg);
+    if (!parsed) return ctx.reply('❌ Использование: /iptables_deny <port[/tcp|udp]>\nПример: /iptables_deny 8080/tcp');
+
+    const cmd = `iptables -I INPUT -p ${parsed.proto} --dport ${parsed.port} -j DROP`;
+    const { stdout, stderr, exitCode } = await exec(cmd);
+    if (exitCode !== 0) {
+      return ctx.reply(`❌ Ошибка iptables:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+    }
+    return ctx.reply(`✅ iptables: Заблокирован трафик на порт <code>${escapeHtml(parsed.port)}/${parsed.proto}</code>\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
+  });
+
+  bot.command('iptables_delete', async (ctx) => {
+    const num = ctx.message.text.split(/\s+/)[1];
+    if (!num || !/^\d+$/.test(num)) {
+      return ctx.reply('❌ Укажите номер правила из /iptables: /iptables_delete <num>');
     }
 
-    return ctx.reply(`✅ Порт <code>${escapeHtml(port)}</code> закрыт.\n${codeBlock(stdout)}`, { parse_mode: 'HTML' });
+    const cmd = `iptables -D INPUT ${num}`;
+    const { stdout, stderr, exitCode } = await exec(cmd);
+    if (exitCode !== 0) {
+      return ctx.reply(`❌ Ошибка удаления правила #${num}:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
+    }
+    return ctx.reply(`✅ iptables: Правило #${num} удалено из цепочки INPUT.\n${codeBlock(stdout || 'ОК')}`, { parse_mode: 'HTML' });
   });
 }
 

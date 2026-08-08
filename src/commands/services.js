@@ -1,6 +1,6 @@
 const { Markup } = require('telegraf');
 const { exec } = require('../utils/exec');
-const { escapeHtml, codeBlock, truncate } = require('../utils/format');
+const { escapeHtml, codeBlock, truncate, sendLongCodeBlock } = require('../utils/format');
 
 async function getServicesList() {
   const { stdout } = await exec(
@@ -133,9 +133,7 @@ function register(bot) {
 
     const { stdout, stderr } = await exec(`systemctl status ${name} --no-pager`);
     const output = stdout || stderr;
-    return ctx.reply(`<b>⚙️ ${escapeHtml(name)}</b>\n\n${codeBlock(truncate(output))}`, {
-      parse_mode: 'HTML',
-    });
+    return sendLongCodeBlock(ctx, `<b>⚙️ ${escapeHtml(name)}</b>`, output);
   });
 }
 

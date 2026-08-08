@@ -47,10 +47,14 @@ bot.catch((err, ctx) => {
   ctx.reply('❌ Произошла ошибка. Попробуйте снова.').catch(() => {});
 });
 
+// Службы фонового мониторинга
+const sshWatcher = require('./services/sshWatcher');
+
 // Запуск бота
 bot.launch()
   .then(() => {
     logger.info(`✅ Бот запущен. Admins: [${config.adminIds.join(', ')}]`);
+    sshWatcher.start(bot);
   })
   .catch((err) => {
     logger.error(`❌ Не удалось запустить бота: ${err.message}`);
@@ -60,9 +64,11 @@ bot.launch()
 // Graceful shutdown
 process.once('SIGINT', () => {
   logger.info('Получен SIGINT, останавливаю бота...');
+  sshWatcher.stop();
   bot.stop('SIGINT');
 });
 process.once('SIGTERM', () => {
   logger.info('Получен SIGTERM, останавливаю бота...');
+  sshWatcher.stop();
   bot.stop('SIGTERM');
 });

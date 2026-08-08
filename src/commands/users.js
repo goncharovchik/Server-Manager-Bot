@@ -1,5 +1,5 @@
 const { exec } = require('../utils/exec');
-const { escapeHtml, codeBlock, truncate } = require('../utils/format');
+const { escapeHtml, codeBlock, truncate, sendLongCodeBlock } = require('../utils/format');
 
 function register(bot) {
   bot.command('users', async (ctx) => {
@@ -20,6 +20,11 @@ function register(bot) {
     }
 
     return ctx.reply(truncate(text), { parse_mode: 'HTML' });
+  });
+
+  bot.command(['logins', 'who', 'sessions'], async (ctx) => {
+    const { stdout, stderr } = await exec('who -a || w');
+    return sendLongCodeBlock(ctx, '<b>🌐 Активные сессии подключений (who/w)</b>', stdout || stderr || 'Нет активных сессий');
   });
 
   // Inline-кнопка

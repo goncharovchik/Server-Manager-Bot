@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('../utils/exec');
-const { escapeHtml, codeBlock, truncate, formatBytes } = require('../utils/format');
+const { escapeHtml, codeBlock, sendLongCodeBlock, formatBytes } = require('../utils/format');
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB для Telegram
 const MAX_CAT_SIZE = 1024 * 1024; // 1 MB для просмотра
@@ -23,10 +23,7 @@ function register(bot) {
       return ctx.reply(`❌ Ошибка:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
     }
 
-    return ctx.reply(
-      `<b>📁 ${escapeHtml(targetPath)}</b>\n\n${codeBlock(truncate(stdout))}`,
-      { parse_mode: 'HTML' }
-    );
+    return sendLongCodeBlock(ctx, `<b>📁 ${escapeHtml(targetPath)}</b>`, stdout);
   });
 
   bot.command('cat', async (ctx) => {
@@ -50,10 +47,7 @@ function register(bot) {
       return ctx.reply(`❌ Ошибка чтения:\n${codeBlock(stderr)}`, { parse_mode: 'HTML' });
     }
 
-    return ctx.reply(
-      `<b>📄 ${escapeHtml(path.basename(targetPath))}</b>\n\n${codeBlock(truncate(stdout))}`,
-      { parse_mode: 'HTML' }
-    );
+    return sendLongCodeBlock(ctx, `<b>📄 ${escapeHtml(path.basename(targetPath))}</b>`, stdout);
   });
 
   bot.command('download', async (ctx) => {

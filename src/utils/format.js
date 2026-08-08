@@ -58,19 +58,21 @@ function splitMessage(text, maxLen = MAX_MESSAGE_LENGTH) {
  * Форматирует байты в читаемый вид
  */
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 B';
+  const num = Number(bytes);
+  if (isNaN(num) || num <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+  const i = Math.min(Math.floor(Math.log(num) / Math.log(1024)), units.length - 1);
+  return `${(num / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
 /**
  * Форматирует uptime (секунды) в читаемый вид
  */
 function formatUptime(seconds) {
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
+  const sec = Number(seconds) || 0;
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
 
   const parts = [];
   if (d > 0) parts.push(`${d}д`);
@@ -84,9 +86,42 @@ function formatUptime(seconds) {
  * Генерирует прогресс-бар
  */
 function progressBar(percent, length = 10) {
-  const filled = Math.round((percent / 100) * length);
+  const safePercent = Math.min(Math.max(Number(percent) || 0, 0), 100);
+  const filled = Math.min(Math.max(Math.round((safePercent / 100) * length), 0), length);
   const empty = length - filled;
   return '█'.repeat(filled) + '░'.repeat(empty);
+}
+
+/**
+ * Отправляет многострочный код/текст, автоматически разбивая его на несколько сообщений при превышении лимита
+ */
+async function sendLongCodeBlock(ctx, title, content, options = {}) {
+  const parseMode = options.parse_mode || options.parseMode || 'HTML';
+  const editMsgId = options.editMessageId || null;
+  const maxChunkLen = options.maxChunkLen || 3500;
+
+  const rawContent = String(content || '').trim();
+  if (!rawContent) {
+    const text = title ? `${title}\n\n${codeBlock('(пусто)')}` : codeBlock('(пусто)');
+    if (editMsgId) {
+      return ctx.telegram.editMessageText(ctx.chat.id, editMsgId, null, text, { parse_mode: parseMode });
+    }
+    return ctx.reply(text, { parse_mode: parseMode });
+  }
+
+  const chunks = splitMessage(rawContent, maxChunkLen);
+
+  for (let i = 0; i < chunks.length; i++) {
+    const prefix = (i === 0 && title) ? `${title}\n\n` : '';
+    const chunkCounter = chunks.length > 1 ? `\n<i>[Часть ${i + 1}/${chunks.length}]</i>` : '';
+    const formatted = `${prefix}${codeBlock(chunks[i])}${chunkCounter}`;
+
+    if (i === 0 && editMsgId) {
+      await ctx.telegram.editMessageText(ctx.chat.id, editMsgId, null, formatted, { parse_mode: parseMode });
+    } else {
+      await ctx.reply(formatted, { parse_mode: parseMode });
+    }
+  }
 }
 
 module.exports = {
@@ -94,6 +129,7 @@ module.exports = {
   codeBlock,
   truncate,
   splitMessage,
+  sendLongCodeBlock,
   formatBytes,
   formatUptime,
   progressBar,

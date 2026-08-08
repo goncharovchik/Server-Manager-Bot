@@ -1,6 +1,18 @@
 const si = require('systeminformation');
 const { escapeHtml, formatBytes, formatUptime, progressBar } = require('../utils/format');
 
+function isRealDisk(fs) {
+  if (!fs || fs.size === 0) return false;
+  const mount = fs.mount || '';
+  const type = (fs.type || fs.fs || '').toLowerCase();
+
+  const ignoredTypes = ['tmpfs', 'devtmpfs', 'devfs', 'squashfs', 'iso9660', 'shm', 'cgroup'];
+  if (ignoredTypes.includes(type) && mount !== '/') return false;
+  if (mount.startsWith('/proc') || mount.startsWith('/sys') || mount.startsWith('/run/user')) return false;
+
+  return true;
+}
+
 async function getStatusText() {
   const [cpu, mem, disk, osInfo, time] = await Promise.all([
     si.currentLoad(),
@@ -11,9 +23,9 @@ async function getStatusText() {
   ]);
 
   const cpuLoad = cpu.currentLoad.toFixed(1);
-  const memUsed = mem.used;
+  const activeMem = mem.active || (mem.total - (mem.available || mem.free));
   const memTotal = mem.total;
-  const memPercent = ((memUsed / memTotal) * 100).toFixed(1);
+  const memPercent = ((activeMem / memTotal) * 100).toFixed(1);
   const uptime = time.uptime;
 
   let text = `<b>📊 Сводка сервера</b>\n\n`;
@@ -24,12 +36,12 @@ async function getStatusText() {
   text += `<b>🧠 CPU:</b> ${cpuLoad}%\n`;
   text += `${progressBar(parseFloat(cpuLoad))} ${cpuLoad}%\n\n`;
 
-  text += `<b>💾 RAM:</b> ${formatBytes(memUsed)} / ${formatBytes(memTotal)}\n`;
+  text += `<b>💾 RAM (процессы):</b> ${formatBytes(activeMem)} / ${formatBytes(memTotal)}\n`;
   text += `${progressBar(parseFloat(memPercent))} ${memPercent}%\n\n`;
 
   text += `<b>💿 Диски:</b>\n`;
-  for (const fs of disk) {
-    if (fs.size === 0) continue;
+  const realDisks = disk.filter(isRealDisk);
+  for (const fs of realDisks) {
     const usedPercent = fs.use.toFixed(1);
     text += `  <code>${escapeHtml(fs.mount)}</code> ${formatBytes(fs.used)} / ${formatBytes(fs.size)} (${usedPercent}%)\n`;
     text += `  ${progressBar(parseFloat(usedPercent))}\n`;
@@ -70,15 +82,20 @@ async function getCpuText() {
 async function getRamText() {
   const mem = await si.mem();
 
-  const usedPercent = ((mem.used / mem.total) * 100).toFixed(1);
+  const activeMem = mem.active || (mem.total - (mem.available || mem.free));
+  const usedPercent = ((activeMem / mem.total) * 100).toFixed(1);
+  const buffCache = (mem.buffers || 0) + (mem.cached || 0);
   const swapPercent = mem.swaptotal > 0 ? ((mem.swapused / mem.swaptotal) * 100).toFixed(1) : '0';
 
   let text = `<b>💾 RAM</b>\n\n`;
   text += `<b>Всего:</b> ${formatBytes(mem.total)}\n`;
-  text += `<b>Использовано:</b> ${formatBytes(mem.used)} (${usedPercent}%)\n`;
+  text += `<b>Занято (процессы):</b> ${formatBytes(activeMem)} (${usedPercent}%)\n`;
   text += `${progressBar(parseFloat(usedPercent))}\n`;
-  text += `<b>Свободно:</b> ${formatBytes(mem.free)}\n`;
-  text += `<b>Доступно:</b> ${formatBytes(mem.available)}\n\n`;
+  if (buffCache > 0) {
+    text += `<b>Буферы / Кэш:</b> ${formatBytes(buffCache)}\n`;
+  }
+  text += `<b>Доступно:</b> ${formatBytes(mem.available || mem.free)}\n`;
+  text += `<b>Свободно:</b> ${formatBytes(mem.free)}\n\n`;
 
   text += `<b>Swap:</b> ${formatBytes(mem.swapused)} / ${formatBytes(mem.swaptotal)}`;
   if (mem.swaptotal > 0) {
@@ -90,10 +107,10 @@ async function getRamText() {
 
 async function getDiskText() {
   const disks = await si.fsSize();
+  const realDisks = disks.filter(isRealDisk);
 
   let text = `<b>💿 Диски</b>\n\n`;
-  for (const fs of disks) {
-    if (fs.size === 0) continue;
+  for (const fs of realDisks) {
     const usedPercent = fs.use.toFixed(1);
     text += `<b>${escapeHtml(fs.fs)}</b>\n`;
     text += `  Mount: <code>${escapeHtml(fs.mount)}</code>\n`;

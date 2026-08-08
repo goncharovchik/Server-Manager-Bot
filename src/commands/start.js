@@ -28,6 +28,20 @@ function mainMenuKeyboard() {
   ]);
 }
 
+/**
+ * Главная постоянная нижняя клавиатура Telegram
+ */
+function mainReplyKeyboard() {
+  return Markup.keyboard([
+    ['📊 Мониторинг', '⚙️ Сервисы'],
+    ['🐳 Docker', '📁 Файлы'],
+    ['👥 Пользователи', '🔥 Firewall'],
+    ['📦 Пакеты', '💾 Бэкапы'],
+    ['📋 Логи', '🖥 Shell'],
+    ['📋 Главное меню', '❓ Помощь'],
+  ]).resize().persistent();
+}
+
 function monitoringSubmenu() {
   return Markup.inlineKeyboard([
     [
@@ -66,7 +80,10 @@ function firewallSubmenu() {
       Markup.button.callback('📋 Статус', 'fw:status'),
       Markup.button.callback('📜 Правила', 'fw:rules'),
     ],
-    [Markup.button.callback('« Назад', 'menu:main')],
+    [
+      Markup.button.callback('🧱 iptables', 'fw:iptables'),
+      Markup.button.callback('« Назад', 'menu:main'),
+    ],
   ]);
 }
 
@@ -115,11 +132,12 @@ const HELP_TEXT = `
 /download &lt;path&gt;, /upload (reply с файлом)
 
 <b>👥 Пользователи:</b>
-/users, /useradd &lt;name&gt;, /userdel &lt;name&gt;
+/users, /logins, /useradd &lt;name&gt;, /userdel &lt;name&gt;
 
 <b>🔥 Firewall:</b>
 /fw_status, /fw_rules
 /fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;
+/iptables, /iptables_allow &lt;port&gt;, /iptables_deny &lt;port&gt;, /iptables_delete &lt;num&gt;
 
 <b>📦 Пакеты:</b>
 /apt_update, /apt_upgrade, /apt_install &lt;name&gt;
@@ -140,20 +158,124 @@ function register(bot) {
   bot.start((ctx) => {
     return ctx.reply('👋 <b>VDS Manager Bot</b>\n\nВыберите раздел:', {
       parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
       ...mainMenuKeyboard(),
     });
   });
 
   // /help
   bot.help((ctx) => {
-    return ctx.reply(HELP_TEXT, { parse_mode: 'HTML' });
+    return ctx.reply(HELP_TEXT, {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+    });
   });
 
   // /menu — повторный вызов главного меню
   bot.command('menu', (ctx) => {
     return ctx.reply('📋 <b>Главное меню</b>', {
       parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
       ...mainMenuKeyboard(),
+    });
+  });
+
+  // --- Обработчики нажатий нижней persistent-клавиатуры ---
+  bot.hears('📊 Мониторинг', (ctx) => {
+    return ctx.reply('📊 <b>Мониторинг</b>\n\nВыберите метрику:', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...monitoringSubmenu(),
+    });
+  });
+
+  bot.hears('⚙️ Сервисы', (ctx) => {
+    return ctx.reply('⚙️ <b>Сервисы</b>\n\nИспользуйте меню или команды:\n/services\n/service_start, /service_stop, /service_restart, /service_status &lt;name&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...servicesSubmenu(),
+    });
+  });
+
+  bot.hears('🐳 Docker', (ctx) => {
+    return ctx.reply('🐳 <b>Docker</b>\n\nИспользуйте меню или команды:\n/containers\n/container_start, /container_stop, /container_restart, /container_logs &lt;name&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...dockerSubmenu(),
+    });
+  });
+
+  bot.hears('📁 Файлы', (ctx) => {
+    return ctx.reply('📁 <b>Файлы</b>\n\nИспользуйте команды:\n/ls &lt;path&gt;\n/cat &lt;path&gt;\n/download &lt;path&gt;\n/upload (reply с файлом)', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...Markup.inlineKeyboard([[Markup.button.callback('« Назад', 'menu:main')]]),
+    });
+  });
+
+  bot.hears('👥 Пользователи', (ctx) => {
+    return ctx.reply('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/useradd &lt;name&gt;\n/userdel &lt;name&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback('📋 Список', 'usr:list')],
+        [Markup.button.callback('« Назад', 'menu:main')],
+      ]),
+    });
+  });
+
+  bot.hears('🔥 Firewall', (ctx) => {
+    return ctx.reply('🔥 <b>Firewall</b>\n\nИспользуйте меню или команды:\n/fw_status, /fw_rules\n/fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;\n/iptables, /iptables_allow, /iptables_deny', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...firewallSubmenu(),
+    });
+  });
+
+  bot.hears('📦 Пакеты', (ctx) => {
+    return ctx.reply('📦 <b>Пакеты (APT)</b>\n\nИли: /apt_install &lt;name&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...packagesSubmenu(),
+    });
+  });
+
+  bot.hears('💾 Бэкапы', (ctx) => {
+    return ctx.reply('💾 <b>Бэкапы</b>\n\nИспользуйте:\n/backup_create &lt;path&gt;\n/backup_restore &lt;name&gt;\n/backup_download &lt;name&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...backupSubmenu(),
+    });
+  });
+
+  bot.hears('📋 Логи', (ctx) => {
+    return ctx.reply('📋 <b>Логи</b>\n\nИли: /logs &lt;service&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...logsSubmenu(),
+    });
+  });
+
+  bot.hears('🖥 Shell', (ctx) => {
+    return ctx.reply('🖥 <b>Shell</b>\n\nИспользуйте: /shell &lt;command&gt;', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...Markup.inlineKeyboard([[Markup.button.callback('« Назад', 'menu:main')]]),
+    });
+  });
+
+  bot.hears('📋 Главное меню', (ctx) => {
+    return ctx.reply('📋 <b>Главное меню</b>', {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
+      ...mainMenuKeyboard(),
+    });
+  });
+
+  bot.hears('❓ Помощь', (ctx) => {
+    return ctx.reply(HELP_TEXT, {
+      parse_mode: 'HTML',
+      ...mainReplyKeyboard(),
     });
   });
 
@@ -211,7 +333,7 @@ function register(bot) {
 
   bot.action('menu:firewall', (ctx) => {
     ctx.answerCbQuery();
-    return ctx.editMessageText('🔥 <b>Firewall</b>\n\nИли используйте:\n/fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;', {
+    return ctx.editMessageText('🔥 <b>Firewall</b>\n\nИли используйте:\n/fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;\n/iptables, /iptables_allow, /iptables_deny', {
       parse_mode: 'HTML',
       ...firewallSubmenu(),
     });
@@ -250,4 +372,4 @@ function register(bot) {
   });
 }
 
-module.exports = { register, mainMenuKeyboard };
+module.exports = { register, mainMenuKeyboard, mainReplyKeyboard };

@@ -1,6 +1,6 @@
 const Docker = require('dockerode');
 const { Markup } = require('telegraf');
-const { escapeHtml, codeBlock, truncate } = require('../utils/format');
+const { escapeHtml, codeBlock, truncate, sendLongCodeBlock } = require('../utils/format');
 const logger = require('../logger');
 
 let docker;
@@ -254,13 +254,10 @@ function register(bot) {
 
     try {
       const container = docker.getContainer(name);
-      const logs = await container.logs({ stdout: true, stderr: true, tail: 50 });
+      const logs = await container.logs({ stdout: true, stderr: true, tail: 100 });
       const logText = logs.toString('utf8').replace(/[\x00-\x08]/g, '');
 
-      return ctx.reply(
-        `<b>📋 Логи: ${escapeHtml(name)}</b>\n\n${codeBlock(truncate(logText))}`,
-        { parse_mode: 'HTML' }
-      );
+      return sendLongCodeBlock(ctx, `<b>📋 Логи: ${escapeHtml(name)}</b>`, logText);
     } catch (err) {
       return ctx.reply(`❌ Ошибка: ${codeBlock(err.message)}`, { parse_mode: 'HTML' });
     }

@@ -43,10 +43,16 @@ function exec(command, options = {}) {
       ? `nsenter -t 1 -m -u -i -n -p -- ${command}`
       : command;
 
-  logger.debug(`exec: ${finalCommand}`);
+  const env = {
+    ...process.env,
+    TERM: 'xterm-256color',
+    LANG: 'en_US.UTF-8',
+    LC_ALL: 'en_US.UTF-8',
+    ...(options.env || {}),
+  };
 
   return new Promise((resolve) => {
-    cpExec(finalCommand, { timeout, maxBuffer: MAX_BUFFER }, (error, stdout, stderr) => {
+    cpExec(finalCommand, { timeout, maxBuffer: MAX_BUFFER, env }, (error, stdout, stderr) => {
       const exitCode = error?.code ?? 0;
 
       if (error && error.killed) {
