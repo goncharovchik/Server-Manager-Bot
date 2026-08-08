@@ -162,43 +162,61 @@ async function getUptimeText() {
 }
 
 function register(bot) {
-  // Текстовые команды
-  bot.command('status', async (ctx) => {
+  const handleStatus = async (ctx) => {
     const msg = await ctx.reply('⏳ Собираю данные...');
     const text = await getStatusText();
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, text, { parse_mode: 'HTML' });
-  });
+  };
 
-  bot.command('cpu', async (ctx) => {
+  const handleCpu = async (ctx) => {
     const msg = await ctx.reply('⏳ Собираю данные...');
     const text = await getCpuText();
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, text, { parse_mode: 'HTML' });
-  });
+  };
 
-  bot.command('ram', async (ctx) => {
+  const handleRam = async (ctx) => {
     const msg = await ctx.reply('⏳ Собираю данные...');
     const text = await getRamText();
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, text, { parse_mode: 'HTML' });
-  });
+  };
 
-  bot.command('disk', async (ctx) => {
+  const handleDisk = async (ctx) => {
     const msg = await ctx.reply('⏳ Собираю данные...');
     const text = await getDiskText();
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, text, { parse_mode: 'HTML' });
-  });
+  };
 
-  bot.command('network', async (ctx) => {
+  const handleNetwork = async (ctx) => {
     const msg = await ctx.reply('⏳ Собираю данные...');
     const text = await getNetworkText();
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, text, { parse_mode: 'HTML' });
-  });
+  };
 
-  bot.command('uptime', async (ctx) => {
+  const handleUptime = async (ctx) => {
     const text = await getUptimeText();
     return ctx.reply(text, { parse_mode: 'HTML' });
-  });
+  };
 
-  // Inline-кнопки из подменю мониторинга
+  // Текстовые команды и кнопки клавиатуры
+  bot.command('status', handleStatus);
+  bot.hears('📊 Сводка', handleStatus);
+
+  bot.command('cpu', handleCpu);
+  bot.hears('🧠 CPU', handleCpu);
+
+  bot.command('ram', handleRam);
+  bot.hears('💾 RAM', handleRam);
+
+  bot.command('disk', handleDisk);
+  bot.hears('💿 Диск', handleDisk);
+
+  bot.command('network', handleNetwork);
+  bot.hears('🌐 Сеть', handleNetwork);
+
+  bot.command('uptime', handleUptime);
+  bot.hears('⏱ Uptime', handleUptime);
+
+  // Inline-кнопки
   bot.action('mon:status', async (ctx) => {
     ctx.answerCbQuery();
     const text = await getStatusText();

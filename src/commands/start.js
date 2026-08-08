@@ -137,56 +137,56 @@ function register(bot) {
   });
 
   bot.hears('⚙️ Сервисы', (ctx) => {
-    return ctx.reply('⚙️ <b>Сервисы</b>\n\nИспользуйте клавиши меню или команды:\n/services\n/service_start, /service_stop, /service_restart, /service_status <name>', {
+    return ctx.reply('⚙️ <b>Сервисы</b>\n\nИспользуйте клавиши меню или команды:\n/services\n/service_start, /service_stop, /service_restart, /service_status &lt;name&gt;', {
       parse_mode: 'HTML',
       reply_markup: servicesReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('🐳 Docker', (ctx) => {
-    return ctx.reply('🐳 <b>Docker</b>\n\nИспользуйте клавиши меню или команды:\n/containers\n/container_start, /container_stop, /container_restart, /container_logs <name>', {
+    return ctx.reply('🐳 <b>Docker</b>\n\nИспользуйте клавиши меню или команды:\n/containers\n/container_start, /container_stop, /container_restart, /container_logs &lt;name&gt;', {
       parse_mode: 'HTML',
       reply_markup: dockerReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('📁 Файлы', (ctx) => {
-    return ctx.reply('📁 <b>Файлы</b>\n\nИспользуйте команды:\n/ls <path>\n/cat <path>\n/download <path>\n/upload (reply с файлом)', {
+    return ctx.reply('📁 <b>Файлы</b>\n\nИспользуйте команды:\n/ls &lt;path&gt;\n/cat &lt;path&gt;\n/download &lt;path&gt;\n/upload (reply с файлом)', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('👥 Пользователи', (ctx) => {
-    return ctx.reply('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/logins\n/useradd <name>\n/userdel <name>', {
+    return ctx.reply('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/logins\n/useradd &lt;name&gt;\n/userdel &lt;name&gt;', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('🔥 Firewall', (ctx) => {
-    return ctx.reply('🔥 <b>Firewall</b>\n\nИспользуйте меню или команды:\n/fw_status, /fw_rules\n/fw_allow <port>, /fw_deny <port>\n/iptables, /iptables_allow, /iptables_deny', {
+    return ctx.reply('🔥 <b>Firewall</b>\n\nИспользуйте меню или команды:\n/fw_status, /fw_rules\n/fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;\n/iptables, /iptables_allow, /iptables_deny', {
       parse_mode: 'HTML',
       reply_markup: firewallReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('📦 Пакеты', (ctx) => {
-    return ctx.reply('📦 <b>Пакеты (APT)</b>\n\nИспользуйте меню или: /apt_install <name>', {
+    return ctx.reply('📦 <b>Пакеты (APT)</b>\n\nИспользуйте меню или: /apt_install &lt;name&gt;', {
       parse_mode: 'HTML',
       reply_markup: packagesReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('💾 Бэкапы', (ctx) => {
-    return ctx.reply('💾 <b>Бэкапы</b>\n\nИспользуйте:\n/backup_create <path>\n/backup_restore <name>\n/backup_download <name>', {
+    return ctx.reply('💾 <b>Бэкапы</b>\n\nИспользуйте:\n/backup_create &lt;path&gt;\n/backup_restore &lt;name&gt;\n/backup_download &lt;name&gt;', {
       parse_mode: 'HTML',
       reply_markup: backupReplyKeyboard().reply_markup,
     });
   });
 
   bot.hears('📋 Логи', (ctx) => {
-    return ctx.reply('📋 <b>Логи</b>\n\nИспользуйте меню или: /logs <service>', {
+    return ctx.reply('📋 <b>Логи</b>\n\nИспользуйте меню или: /logs &lt;service&gt;', {
       parse_mode: 'HTML',
       reply_markup: logsReplyKeyboard().reply_markup,
     });

@@ -28,7 +28,7 @@ function statusEmoji(active, sub) {
 }
 
 function register(bot) {
-  bot.command('services', async (ctx) => {
+  const handleServices = async (ctx) => {
     const msg = await ctx.reply('⏳ Получаю список сервисов...');
     const services = await getServicesList();
 
@@ -45,7 +45,10 @@ function register(bot) {
     }
 
     return ctx.telegram.editMessageText(ctx.chat.id, msg.message_id, null, truncate(text), { parse_mode: 'HTML' });
-  });
+  };
+
+  bot.command('services', handleServices);
+  bot.hears('📋 Список сервисов', handleServices);
 
   // Inline-кнопка из подменю
   bot.action('svc:list', async (ctx) => {

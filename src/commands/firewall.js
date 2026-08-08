@@ -37,11 +37,19 @@ function parsePortProto(input) {
 }
 
 function register(bot) {
-  // --- Общие команды Firewall (UFW + iptables fallback) ---
-  bot.command('fw_status', async (ctx) => {
+  const handleFwStatus = async (ctx) => {
     const { type, output } = await getStatusOutput();
     return ctx.reply(`<b>🔥 Firewall Status (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
-  });
+  };
+
+  const handleFwRules = async (ctx) => {
+    const { type, output } = await getRulesOutput();
+    return ctx.reply(`<b>🔥 Firewall Rules (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
+  };
+
+  // --- Общие команды Firewall (UFW + iptables fallback) ---
+  bot.command('fw_status', handleFwStatus);
+  bot.hears('📋 Статус Firewall', handleFwStatus);
 
   bot.action('fw:status', async (ctx) => {
     ctx.answerCbQuery();
@@ -49,10 +57,8 @@ function register(bot) {
     return ctx.editMessageText(`<b>🔥 Firewall Status (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
 
-  bot.command('fw_rules', async (ctx) => {
-    const { type, output } = await getRulesOutput();
-    return ctx.reply(`<b>🔥 Firewall Rules (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
-  });
+  bot.command('fw_rules', handleFwRules);
+  bot.hears('📜 Правила UFW', handleFwRules);
 
   bot.action('fw:rules', async (ctx) => {
     ctx.answerCbQuery();

@@ -69,7 +69,7 @@ function register(bot) {
     return true;
   }
 
-  bot.command('containers', async (ctx) => {
+  const handleContainers = async (ctx) => {
     if (!checkDocker(ctx)) return;
 
     const containers = await getContainersList();
@@ -87,7 +87,10 @@ function register(bot) {
       parse_mode: 'HTML',
       ...containerButtons(containers),
     });
-  });
+  };
+
+  bot.command('containers', handleContainers);
+  bot.hears('📋 Контейнеры', handleContainers);
 
   // Inline: список контейнеров
   bot.action('docker:list', async (ctx) => {
