@@ -1,34 +1,6 @@
 const { Markup } = require('telegraf');
 
 /**
- * Главное меню — inline-клавиатура
- */
-function mainMenuKeyboard() {
-  return Markup.inlineKeyboard([
-    [
-      Markup.button.callback('📊 Мониторинг', 'menu:monitoring'),
-      Markup.button.callback('⚙️ Сервисы', 'menu:services'),
-    ],
-    [
-      Markup.button.callback('🐳 Docker', 'menu:docker'),
-      Markup.button.callback('📁 Файлы', 'menu:files'),
-    ],
-    [
-      Markup.button.callback('👥 Пользователи', 'menu:users'),
-      Markup.button.callback('🔥 Firewall', 'menu:firewall'),
-    ],
-    [
-      Markup.button.callback('📦 Пакеты', 'menu:packages'),
-      Markup.button.callback('💾 Бэкапы', 'menu:backup'),
-    ],
-    [
-      Markup.button.callback('📋 Логи', 'menu:logs'),
-      Markup.button.callback('🖥 Shell', 'menu:shell'),
-    ],
-  ]);
-}
-
-/**
  * Главная постоянная нижняя клавиатура Telegram
  */
 function mainReplyKeyboard() {
@@ -90,76 +62,6 @@ function logsReplyKeyboard() {
   ]).resize().persistent();
 }
 
-function monitoringSubmenu() {
-  return Markup.inlineKeyboard([
-    [
-      Markup.button.callback('📊 Сводка', 'mon:status'),
-      Markup.button.callback('🧠 CPU', 'mon:cpu'),
-    ],
-    [
-      Markup.button.callback('💾 RAM', 'mon:ram'),
-      Markup.button.callback('💿 Диск', 'mon:disk'),
-    ],
-    [
-      Markup.button.callback('🌐 Сеть', 'mon:network'),
-      Markup.button.callback('⏱ Uptime', 'mon:uptime'),
-    ],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
-function servicesSubmenu() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('📋 Список сервисов', 'svc:list')],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
-function dockerSubmenu() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('📋 Контейнеры', 'docker:list')],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
-function firewallSubmenu() {
-  return Markup.inlineKeyboard([
-    [
-      Markup.button.callback('📋 Статус', 'fw:status'),
-      Markup.button.callback('📜 Правила', 'fw:rules'),
-    ],
-    [
-      Markup.button.callback('🧱 iptables', 'fw:iptables'),
-      Markup.button.callback('« Назад', 'menu:main'),
-    ],
-  ]);
-}
-
-function packagesSubmenu() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('🔄 Update', 'apt:update')],
-    [Markup.button.callback('⬆️ Upgrade', 'apt:upgrade')],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
-function backupSubmenu() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback('📋 Список бэкапов', 'bk:list')],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
-function logsSubmenu() {
-  return Markup.inlineKeyboard([
-    [
-      Markup.button.callback('📋 Syslog', 'log:syslog'),
-      Markup.button.callback('🔐 Auth', 'log:authlog'),
-    ],
-    [Markup.button.callback('« Назад', 'menu:main')],
-  ]);
-}
-
 const HELP_TEXT = `
 <b>🖥 VDS Manager Bot</b>
 
@@ -203,14 +105,10 @@ const HELP_TEXT = `
 
 function register(bot) {
   // /start
-  bot.start(async (ctx) => {
-    await ctx.reply('👋 <b>VDS Manager Bot</b>', {
+  bot.start((ctx) => {
+    return ctx.reply('👋 <b>VDS Manager Bot</b>\n\nВыберите раздел в нижней клавиатуре:', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
-    });
-    return ctx.reply('Выберите раздел:', {
-      parse_mode: 'HTML',
-      reply_markup: mainMenuKeyboard().reply_markup,
     });
   });
 
@@ -223,48 +121,32 @@ function register(bot) {
   });
 
   // /menu — повторный вызов главного меню
-  bot.command('menu', async (ctx) => {
-    await ctx.reply('📋 <b>Главное меню</b>', {
+  bot.command('menu', (ctx) => {
+    return ctx.reply('📋 <b>Главное меню</b>', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
-    });
-    return ctx.reply('Выберите раздел:', {
-      parse_mode: 'HTML',
-      reply_markup: mainMenuKeyboard().reply_markup,
     });
   });
 
   // --- Обработчики нажатий нижней persistent-клавиатуры ---
-  bot.hears('📊 Мониторинг', async (ctx) => {
-    await ctx.reply('📊 <b>Мониторинг</b>', {
+  bot.hears('📊 Мониторинг', (ctx) => {
+    return ctx.reply('📊 <b>Мониторинг</b>\n\nВыберите метрику на клавиатуре:', {
       parse_mode: 'HTML',
       reply_markup: monitoringReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Выберите метрику:', {
-      parse_mode: 'HTML',
-      reply_markup: monitoringSubmenu().reply_markup,
-    });
   });
 
-  bot.hears('⚙️ Сервисы', async (ctx) => {
-    await ctx.reply('⚙️ <b>Сервисы</b>', {
+  bot.hears('⚙️ Сервисы', (ctx) => {
+    return ctx.reply('⚙️ <b>Сервисы</b>\n\nИспользуйте клавиши меню или команды:\n/services\n/service_start, /service_stop, /service_restart, /service_status <name>', {
       parse_mode: 'HTML',
       reply_markup: servicesReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Используйте меню или команды:\n/services\n/service_start, /service_stop, /service_restart, /service_status <name>', {
-      parse_mode: 'HTML',
-      reply_markup: servicesSubmenu().reply_markup,
-    });
   });
 
-  bot.hears('🐳 Docker', async (ctx) => {
-    await ctx.reply('🐳 <b>Docker</b>', {
+  bot.hears('🐳 Docker', (ctx) => {
+    return ctx.reply('🐳 <b>Docker</b>\n\nИспользуйте клавиши меню или команды:\n/containers\n/container_start, /container_stop, /container_restart, /container_logs <name>', {
       parse_mode: 'HTML',
       reply_markup: dockerReplyKeyboard().reply_markup,
-    });
-    return ctx.reply('Используйте меню или команды:\n/containers\n/container_start, /container_stop, /container_restart, /container_logs <name>', {
-      parse_mode: 'HTML',
-      reply_markup: dockerSubmenu().reply_markup,
     });
   });
 
@@ -276,64 +158,44 @@ function register(bot) {
   });
 
   bot.hears('👥 Пользователи', (ctx) => {
-    return ctx.reply('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/useradd <name>\n/userdel <name>', {
+    return ctx.reply('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/logins\n/useradd <name>\n/userdel <name>', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
     });
   });
 
-  bot.hears('🔥 Firewall', async (ctx) => {
-    await ctx.reply('🔥 <b>Firewall</b>', {
+  bot.hears('🔥 Firewall', (ctx) => {
+    return ctx.reply('🔥 <b>Firewall</b>\n\nИспользуйте меню или команды:\n/fw_status, /fw_rules\n/fw_allow <port>, /fw_deny <port>\n/iptables, /iptables_allow, /iptables_deny', {
       parse_mode: 'HTML',
       reply_markup: firewallReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Используйте меню или команды:\n/fw_status, /fw_rules\n/fw_allow <port>, /fw_deny <port>\n/iptables, /iptables_allow, /iptables_deny', {
-      parse_mode: 'HTML',
-      reply_markup: firewallSubmenu().reply_markup,
-    });
   });
 
-  bot.hears('📦 Пакеты', async (ctx) => {
-    await ctx.reply('📦 <b>Пакеты (APT)</b>', {
+  bot.hears('📦 Пакеты', (ctx) => {
+    return ctx.reply('📦 <b>Пакеты (APT)</b>\n\nИспользуйте меню или: /apt_install <name>', {
       parse_mode: 'HTML',
       reply_markup: packagesReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Или: /apt_install <name>', {
-      parse_mode: 'HTML',
-      reply_markup: packagesSubmenu().reply_markup,
-    });
   });
 
-  bot.hears('💾 Бэкапы', async (ctx) => {
-    await ctx.reply('💾 <b>Бэкапы</b>', {
+  bot.hears('💾 Бэкапы', (ctx) => {
+    return ctx.reply('💾 <b>Бэкапы</b>\n\nИспользуйте:\n/backup_create <path>\n/backup_restore <name>\n/backup_download <name>', {
       parse_mode: 'HTML',
       reply_markup: backupReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Используйте:\n/backup_create <path>\n/backup_restore <name>\n/backup_download <name>', {
-      parse_mode: 'HTML',
-      reply_markup: backupSubmenu().reply_markup,
-    });
   });
 
-  bot.hears('📋 Логи', async (ctx) => {
-    await ctx.reply('📋 <b>Логи</b>', {
+  bot.hears('📋 Логи', (ctx) => {
+    return ctx.reply('📋 <b>Логи</b>\n\nИспользуйте меню или: /logs <service>', {
       parse_mode: 'HTML',
       reply_markup: logsReplyKeyboard().reply_markup,
     });
-    return ctx.reply('Или: /logs <service>', {
-      parse_mode: 'HTML',
-      reply_markup: logsSubmenu().reply_markup,
-    });
   });
 
-  bot.hears(['« Назад в главное меню', '📋 Главное меню'], async (ctx) => {
-    await ctx.reply('📋 <b>Главное меню</b>', {
+  bot.hears(['« Назад в главное меню', '📋 Главное меню'], (ctx) => {
+    return ctx.reply('📋 <b>Главное меню</b>', {
       parse_mode: 'HTML',
       reply_markup: mainReplyKeyboard().reply_markup,
-    });
-    return ctx.reply('Выберите раздел:', {
-      parse_mode: 'HTML',
-      reply_markup: mainMenuKeyboard().reply_markup,
     });
   });
 
@@ -364,101 +226,19 @@ function register(bot) {
   bot.hears('❓ Помощь', (ctx) => {
     return ctx.reply(HELP_TEXT, {
       parse_mode: 'HTML',
-      ...mainReplyKeyboard(),
-    });
-  });
-
-  // Навигация по подменю через callback
-  bot.action('menu:main', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('📋 <b>Главное меню</b>', {
-      parse_mode: 'HTML',
-      ...mainMenuKeyboard(),
-    });
-  });
-
-  bot.action('menu:monitoring', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('📊 <b>Мониторинг</b>\n\nВыберите метрику:', {
-      parse_mode: 'HTML',
-      ...monitoringSubmenu(),
-    });
-  });
-
-  bot.action('menu:services', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('⚙️ <b>Сервисы</b>\n\nИли используйте:\n/service_start, /service_stop, /service_restart, /service_status &lt;name&gt;', {
-      parse_mode: 'HTML',
-      ...servicesSubmenu(),
-    });
-  });
-
-  bot.action('menu:docker', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('🐳 <b>Docker</b>\n\nИли используйте:\n/container_start, /container_stop, /container_restart, /container_logs &lt;name&gt;', {
-      parse_mode: 'HTML',
-      ...dockerSubmenu(),
-    });
-  });
-
-  bot.action('menu:files', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('📁 <b>Файлы</b>\n\nИспользуйте команды:\n/ls &lt;path&gt;\n/cat &lt;path&gt;\n/download &lt;path&gt;\n/upload (reply с файлом)', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([[Markup.button.callback('« Назад', 'menu:main')]]),
-    });
-  });
-
-  bot.action('menu:users', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('👥 <b>Пользователи</b>\n\nИспользуйте команды:\n/users\n/useradd &lt;name&gt;\n/userdel &lt;name&gt;', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([
-        [Markup.button.callback('📋 Список', 'usr:list')],
-        [Markup.button.callback('« Назад', 'menu:main')],
-      ]),
-    });
-  });
-
-  bot.action('menu:firewall', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('🔥 <b>Firewall</b>\n\nИли используйте:\n/fw_allow &lt;port&gt;, /fw_deny &lt;port&gt;\n/iptables, /iptables_allow, /iptables_deny', {
-      parse_mode: 'HTML',
-      ...firewallSubmenu(),
-    });
-  });
-
-  bot.action('menu:packages', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('📦 <b>Пакеты (APT)</b>\n\nИли: /apt_install &lt;name&gt;', {
-      parse_mode: 'HTML',
-      ...packagesSubmenu(),
-    });
-  });
-
-  bot.action('menu:backup', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('💾 <b>Бэкапы</b>\n\nИспользуйте:\n/backup_create &lt;path&gt;\n/backup_restore &lt;name&gt;\n/backup_download &lt;name&gt;', {
-      parse_mode: 'HTML',
-      ...backupSubmenu(),
-    });
-  });
-
-  bot.action('menu:logs', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('📋 <b>Логи</b>\n\nИли: /logs &lt;service&gt;', {
-      parse_mode: 'HTML',
-      ...logsSubmenu(),
-    });
-  });
-
-  bot.action('menu:shell', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.editMessageText('🖥 <b>Shell</b>\n\nИспользуйте: /shell &lt;command&gt;', {
-      parse_mode: 'HTML',
-      ...Markup.inlineKeyboard([[Markup.button.callback('« Назад', 'menu:main')]]),
+      reply_markup: mainReplyKeyboard().reply_markup,
     });
   });
 }
 
-module.exports = { register, mainMenuKeyboard, mainReplyKeyboard };
+module.exports = {
+  register,
+  mainReplyKeyboard,
+  monitoringReplyKeyboard,
+  servicesReplyKeyboard,
+  dockerReplyKeyboard,
+  firewallReplyKeyboard,
+  packagesReplyKeyboard,
+  backupReplyKeyboard,
+  logsReplyKeyboard,
+};
