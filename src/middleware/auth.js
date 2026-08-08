@@ -8,8 +8,8 @@ function authMiddleware(ctx, next) {
   const userId = ctx.from?.id;
 
   if (!userId || !config.adminIds.includes(userId)) {
-    logger.warn(`Неавторизованный доступ: user=${userId} username=${ctx.from?.username || 'N/A'}`);
-    return ctx.reply('⛔ Доступ запрещён.');
+    logger.warn(`Неавторизованный доступ (игнорируется): user=${userId} username=${ctx.from?.username || 'N/A'}`);
+    return;
   }
 
   return next();
