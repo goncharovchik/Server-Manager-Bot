@@ -24,9 +24,9 @@ const logsModule = require('./commands/logs');
 const bot = new Telegraf(config.botToken);
 
 // Подключение middleware (порядок важен)
-bot.use(actionLoggerMiddleware);
 bot.use(authMiddleware);
 bot.use(rateLimitMiddleware);
+bot.use(actionLoggerMiddleware);
 
 // Регистрация модулей команд
 startModule.register(bot);

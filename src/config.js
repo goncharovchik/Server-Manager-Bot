@@ -4,8 +4,9 @@ const config = {
   botToken: process.env.BOT_TOKEN,
   adminIds: (process.env.ADMIN_IDS || '')
     .split(',')
-    .map((id) => parseInt(id.trim(), 10))
-    .filter((id) => !isNaN(id)),
+    .map((id) => id.trim())
+    .filter((id) => /^\d+$/.test(id))
+    .map((id) => parseInt(id, 10)),
   rateLimit: parseInt(process.env.RATE_LIMIT, 10) || 30,
   logLevel: process.env.LOG_LEVEL || 'info',
   backupDir: process.env.BACKUP_DIR || '/var/backups/vds_bot',
