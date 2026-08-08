@@ -50,8 +50,8 @@ bot.catch((err, ctx) => {
 // Службы фонового мониторинга
 const sshWatcher = require('./services/sshWatcher');
 
-// Запуск бота
-bot.launch()
+// Запуск бота (dropPendingUpdates: true сбрасывает старые накопившиеся сообщения)
+bot.launch({ dropPendingUpdates: true })
   .then(() => {
     logger.info(`✅ Бот запущен. Admins: [${config.adminIds.join(', ')}]`);
     sshWatcher.start(bot);
