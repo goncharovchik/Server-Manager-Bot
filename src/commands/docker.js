@@ -95,7 +95,7 @@ function register(bot) {
   // Inline: список контейнеров
   bot.action('docker:list', async (ctx) => {
     if (!checkDocker(ctx)) return;
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
 
     const containers = await getContainersList();
     if (!containers || containers.length === 0) {
@@ -116,7 +116,7 @@ function register(bot) {
   // Inline: инфо о контейнере
   bot.action(/^docker:info:(.+)$/, async (ctx) => {
     if (!checkDocker(ctx)) return;
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const name = ctx.match[1];
 
     try {
@@ -162,7 +162,7 @@ function register(bot) {
   // Inline: start/stop/restart
   bot.action(/^docker:(start|stop|restart):(.+)$/, async (ctx) => {
     if (!checkDocker(ctx)) return;
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const action = ctx.match[1];
     const name = ctx.match[2];
 
@@ -187,7 +187,7 @@ function register(bot) {
   // Inline: логи контейнера
   bot.action(/^docker:logs:(.+)$/, async (ctx) => {
     if (!checkDocker(ctx)) return;
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const name = ctx.match[1];
 
     try {

@@ -29,7 +29,7 @@ function register(bot) {
 
   // Inline-кнопка
   bot.action('usr:list', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { stdout } = await exec('cat /etc/passwd | grep -E ":[0-9]{4,}:" | cut -d: -f1,3');
 
     const lines = stdout.trim().split('\n').filter(Boolean);

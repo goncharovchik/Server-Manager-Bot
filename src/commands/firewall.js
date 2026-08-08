@@ -52,7 +52,7 @@ function register(bot) {
   bot.hears('📋 Статус Firewall', handleFwStatus);
 
   bot.action('fw:status', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { type, output } = await getStatusOutput();
     return ctx.editMessageText(`<b>🔥 Firewall Status (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
@@ -61,7 +61,7 @@ function register(bot) {
   bot.hears('📜 Правила UFW', handleFwRules);
 
   bot.action('fw:rules', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { type, output } = await getRulesOutput();
     return ctx.editMessageText(`<b>🔥 Firewall Rules (${type})</b>\n\n${codeBlock(truncate(output))}`, { parse_mode: 'HTML' });
   });
@@ -122,7 +122,7 @@ function register(bot) {
   bot.hears('🧱 Правила iptables', handleIptables);
 
   bot.action('fw:iptables', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { stdout, stderr } = await exec('iptables -L -n -v --line-numbers');
     return ctx.editMessageText(`<b>🧱 iptables Rules</b>\n\n${codeBlock(truncate(stdout || stderr))}`, { parse_mode: 'HTML' });
   });

@@ -218,37 +218,37 @@ function register(bot) {
 
   // Inline-кнопки
   bot.action('mon:status', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getStatusText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });
 
   bot.action('mon:cpu', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getCpuText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });
 
   bot.action('mon:ram', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getRamText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });
 
   bot.action('mon:disk', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getDiskText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });
 
   bot.action('mon:network', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getNetworkText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });
 
   bot.action('mon:uptime', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const text = await getUptimeText();
     return ctx.editMessageText(text, { parse_mode: 'HTML' });
   });

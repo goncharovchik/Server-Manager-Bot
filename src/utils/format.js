@@ -93,6 +93,14 @@ function progressBar(percent, length = 10) {
 }
 
 /**
+ * Удаляет ANSI-последовательности (цвета терминала, управляющие коды ncurses)
+ */
+function stripAnsi(text) {
+  if (typeof text !== 'string') return '';
+  return text.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=>]/g, '');
+}
+
+/**
  * Отправляет многострочный код/текст, автоматически разбивая его на несколько сообщений при превышении лимита
  */
 async function sendLongCodeBlock(ctx, title, content, options = {}) {
@@ -100,7 +108,7 @@ async function sendLongCodeBlock(ctx, title, content, options = {}) {
   const editMsgId = options.editMessageId || null;
   const maxChunkLen = options.maxChunkLen || 3500;
 
-  const rawContent = String(content || '').trim();
+  const rawContent = stripAnsi(String(content || '')).trim();
   if (!rawContent) {
     const text = title ? `${title}\n\n${codeBlock('(пусто)')}` : codeBlock('(пусто)');
     if (editMsgId) {
@@ -129,9 +137,10 @@ module.exports = {
   codeBlock,
   truncate,
   splitMessage,
-  sendLongCodeBlock,
   formatBytes,
   formatUptime,
   progressBar,
+  sendLongCodeBlock,
+  stripAnsi,
   MAX_MESSAGE_LENGTH,
 };

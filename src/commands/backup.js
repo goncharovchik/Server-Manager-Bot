@@ -56,7 +56,7 @@ function register(bot) {
 
   // Inline-кнопка
   bot.action('bk:list', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { stdout, exitCode } = await exec(
       `ls -lhS ${JSON.stringify(config.backupDir)} 2>/dev/null | tail -n +2`
     );

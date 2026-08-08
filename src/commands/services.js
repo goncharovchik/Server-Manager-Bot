@@ -52,7 +52,7 @@ function register(bot) {
 
   // Inline-кнопка из подменю
   bot.action('svc:list', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const services = await getServicesList();
 
     if (services.length === 0) {

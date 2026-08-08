@@ -145,7 +145,7 @@ function register(bot) {
 
   // Callbacks кнопок управления
   bot.action('sh:exit', async (ctx) => {
-    ctx.answerCbQuery('Выход из Shell');
+    ctx.answerCbQuery('Выход из Shell').catch(() => {});
     sessions.delete(ctx.chat.id);
     return ctx.reply('🚪 Вы вышли из интерактивного Shell.', {
       parse_mode: 'HTML',
@@ -154,7 +154,7 @@ function register(bot) {
   });
 
   bot.action('sh:pwd', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const session = sessions.get(ctx.chat.id);
     const cwd = session?.cwd || '/';
     return ctx.reply(`📁 Текущий каталог: <code>${escapeHtml(cwd)}</code>`, { parse_mode: 'HTML' });
@@ -163,7 +163,7 @@ function register(bot) {
   bot.action(/^sh:ctrl:(.+)$/, async (ctx) => {
     const letter = ctx.match[1].toLowerCase();
     const keyInfo = CONTROL_KEYS[`ctrl+${letter}`];
-    ctx.answerCbQuery(`Сигнал ${keyInfo?.name || letter}`);
+    ctx.answerCbQuery(`Сигнал ${keyInfo?.name || letter}`).catch(() => {});
 
     return ctx.reply(
       `🕹 <b>Сигнал клавиши: ${escapeHtml(keyInfo?.name || 'Ctrl+' + letter.toUpperCase())}</b>\n` +
@@ -175,7 +175,7 @@ function register(bot) {
   bot.action(/^sh:f:(\d+)$/, async (ctx) => {
     const num = ctx.match[1];
     const keyInfo = CONTROL_KEYS[`f${num}`];
-    ctx.answerCbQuery(`Клавиша F${num}`);
+    ctx.answerCbQuery(`Клавиша F${num}`).catch(() => {});
 
     return ctx.reply(
       `🕹 <b>Клавиша: F${num}</b>\n<i>Передана последовательность ${escapeHtml(keyInfo?.name || 'F' + num)}</i>`,
@@ -184,7 +184,7 @@ function register(bot) {
   });
 
   bot.action('sh:tab', async (ctx) => {
-    ctx.answerCbQuery('Tab');
+    ctx.answerCbQuery('Tab').catch(() => {});
     return ctx.reply('🕹 <b>Клавиша: Tab</b> (Автодополнение)', { parse_mode: 'HTML', ...controlKeysKeyboard() });
   });
 
@@ -195,8 +195,16 @@ function register(bot) {
 
     const text = ctx.message.text.trim();
 
-    // Команды выходы из режима
-    if (/^(exit|quit|\/exit|\/start|\/menu|❌ Выйти из Shell)$/i.test(text)) {
+    // Передаем управление дальше, если это слеш-команда или кнопка навигации меню
+    const isNavigation = text.startsWith('/') || /^(📊 Мониторинг|⚙️ Сервисы|🐳 Docker|📁 Файлы|👥 Пользователи|🔥 Firewall|📦 Пакеты|💾 Бэкапы|📋 Логи|🖥 Интерактивный Shell|📋 Главное меню|❓ Помощь|« Назад в главное меню|📊 Сводка|🧠 CPU|💾 RAM|💿 Диск|🌐 Сеть|⏱ Uptime|📋 Список сервисов|📋 Контейнеры|📋 Статус Firewall|📜 Правила UFW|🧱 Правила iptables|🔄 Update APT|⬆️ Upgrade APT|📋 Список бэкапов|📋 Syslog|🔐 Auth log)$/.test(text);
+    if (isNavigation) {
+      if (/^(exit|quit|\/exit|\/start|\/menu|« Назад в главное меню|📋 Главное меню|❌ Выйти из Shell)$/i.test(text)) {
+        sessions.delete(ctx.chat.id);
+      }
+      return next();
+    }
+
+    if (/^(exit|quit|❌ Выйти из Shell)$/i.test(text)) {
       sessions.delete(ctx.chat.id);
       return ctx.reply('🚪 Вы вышли из интерактивного Shell.', {
         parse_mode: 'HTML',

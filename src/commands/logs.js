@@ -28,7 +28,7 @@ function register(bot) {
   bot.hears('📋 Syslog', handleSyslog);
 
   bot.action('log:syslog', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { stdout, stderr } = await exec('tail -n 100 /var/log/syslog');
     return sendLongCodeBlock(ctx, `<b>📋 Syslog</b>`, stdout || stderr);
   });
@@ -37,7 +37,7 @@ function register(bot) {
   bot.hears('🔐 Auth log', handleAuthlog);
 
   bot.action('log:authlog', async (ctx) => {
-    ctx.answerCbQuery();
+    ctx.answerCbQuery().catch(() => {});
     const { stdout, stderr } = await exec('tail -n 100 /var/log/auth.log');
     return sendLongCodeBlock(ctx, `<b>🔐 Auth Log</b>`, stdout || stderr);
   });

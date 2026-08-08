@@ -28,7 +28,7 @@ function register(bot) {
   bot.hears('🔄 Update APT', handleUpdate);
 
   bot.action('apt:update', async (ctx) => {
-    ctx.answerCbQuery('Обновляю...');
+    ctx.answerCbQuery('Обновляю...').catch(() => {});
     await ctx.editMessageText('⏳ Обновляю список пакетов...');
     const { stdout, stderr, exitCode } = await exec('apt-get update -y', { timeout: 120_000 });
 
@@ -43,7 +43,7 @@ function register(bot) {
   bot.hears('⬆️ Upgrade APT', handleUpgrade);
 
   bot.action('apt:upgrade', async (ctx) => {
-    ctx.answerCbQuery('Обновляю пакеты...');
+    ctx.answerCbQuery('Обновляю пакеты...').catch(() => {});
     await ctx.editMessageText('⏳ Обновляю пакеты (может занять несколько минут)...');
     const { stdout, stderr, exitCode } = await exec('apt-get upgrade -y', { timeout: 600_000 });
 
